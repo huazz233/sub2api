@@ -48,6 +48,7 @@ jobs:
 
           docker build \
             --platform linux/amd64 \
+            --build-arg "GOLANG_IMAGE=golang:1.26.6-alpine" \
             --build-arg "VERSION=${IMAGE_TAG}" \
             --build-arg "COMMIT=${GITHUB_SHA}" \
             --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
