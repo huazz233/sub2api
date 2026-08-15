@@ -231,6 +231,8 @@ func TestNormalizeCodexModel(t *testing.T) {
 		"gpt-image-2":               "gpt-image-2",
 		"gpt-5.4-nano":              "gpt-5.4-nano",
 		"gpt-5.4-nano-high":         "gpt-5.4-nano",
+		"gpt-5.6-sol-wm":            "gpt-5.6-sol-wm",
+		"openai/gpt-5.6-sol-wm":     "gpt-5.6-sol-wm",
 		"gpt6":                      "gpt6",
 		"claude-opus-4-6":           "claude-opus-4-6",
 	}
@@ -260,6 +262,12 @@ func TestNormalizeOpenAIModelForUpstream(t *testing.T) {
 			account: &Account{Type: AccountTypeOAuth},
 			model:   "openai/gpt-5.6",
 			want:    "gpt-5.6-sol",
+		},
+		{
+			name:    "oauth preserves explicit GPT-5.6 Sol WM alias",
+			account: &Account{Type: AccountTypeOAuth},
+			model:   "gpt-5.6-sol-wm",
+			want:    "gpt-5.6-sol-wm",
 		},
 		{
 			name:    "oauth preserves unknown non codex model",

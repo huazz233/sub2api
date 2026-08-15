@@ -563,6 +563,11 @@ func normalizeCodexModel(model string) string {
 	if model == "" {
 		return "gpt-5.4"
 	}
+	// The WM variant is an explicit upstream model alias. Keep it distinct from
+	// the billing-family alias handled by normalizeKnownOpenAICodexModel.
+	if normalized := canonicalizeOpenAIModelAliasSpelling(model); normalized == "gpt-5.6-sol-wm" {
+		return normalized
+	}
 	if mapped, ok := normalizeKnownCodexModel(model); ok {
 		return mapped
 	}
