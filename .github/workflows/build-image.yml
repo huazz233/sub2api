@@ -1,0 +1,67 @@
+name: Build and publish image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag
+        required: true
+        default: gpt56-sol-wm
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out selected branch
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: |
+          git init .
+          git remote add origin "https://github.com/${REPOSITORY}.git"
+          git fetch --depth=1 origin "${REF}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Sign in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Build and publish image
+        env:
+          IMAGE_TAG: ${{ inputs.tag }}
+        run: |
+          case "${IMAGE_TAG}" in
+            ""|*[!A-Za-z0-9_.-]*)
+              echo "Invalid image tag: ${IMAGE_TAG}" >&2
+              exit 2
+              ;;
+          esac
+
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          sha_tag="${IMAGE_TAG}-${GITHUB_SHA::12}"
+
+          docker build \
+            --platform linux/amd64 \
+            --build-arg "VERSION=${IMAGE_TAG}" \
+            --build-arg "COMMIT=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --tag "${image}:${IMAGE_TAG}" \
+            --tag "${image}:${sha_tag}" \
+            .
+
+          docker push "${image}:${IMAGE_TAG}"
+          docker push "${image}:${sha_tag}"
+
+          {
+            echo "### Published images"
+            echo
+            echo "\`${image}:${IMAGE_TAG}\`"
+            echo
+            echo "\`${image}:${sha_tag}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
